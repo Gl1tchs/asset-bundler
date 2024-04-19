@@ -28,3 +28,27 @@ not know the new size of it.
 We are basicaly registering the assets by their ID's, starting position and it's
 size.
 - **Data Tree**: Finally we are keeping our all data here
+
+### Usage:
+
+After you clone and make you just need to provide the input asset file as an
+argument.
+```
+./asset-bundler asset-pack.apkg
+```
+
+### Building:
+
+I am using Makefiles to keep everything simple as possible but it should
+work in any other build systems or compilers (MSVC, CLANG, GCC) as well.
+
+- Clone the repository:
+```bash
+git clone https://github.com/Gl1tchs/asset-bundler.git
+cd asset-bundler
+```
+
+- And build it:
+```bash
+make
+```
