@@ -216,7 +216,7 @@ int main(const int argc, const char* argv[]) {
 	int result = write_data(asset_pack, asset_pack_path);
 
 	if (result == 0) {
-		std::cout << "Assets bundeled successufully!\n";
+		std::cout << "Assets bundled successufully!\n";
 	}
 
 	return result;

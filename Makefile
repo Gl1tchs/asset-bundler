@@ -1,4 +1,4 @@
-CC=g++
+CC=clang++
 CFLAGS=-std=c++17 -O3 -Wall -Wextra -pedantic -Werror
 TARGET=asset-bundler
 
