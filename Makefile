@@ -1,10 +1,13 @@
 CC=g++
-CFLAGS=-O -Wall
+CFLAGS=-std=c++17 -O3 -Wall -Wextra -pedantic -Werror
+TARGET=asset-bundler
 
-all:
-	$(CC) $(CFLAGS) asset-bundler.cpp -o asset-bundler
+all: $(TARGET)
+
+$(TARGET): asset-bundler.cpp
+	$(CC) $(CFLAGS) $^ -o $@
 
 clean:
-	rm ./asset-bundler
+	rm -f $(TARGET) example.apkg.bin 
 
-.PHONY: clean
+.PHONY: all clean
