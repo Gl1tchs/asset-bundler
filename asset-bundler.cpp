@@ -26,12 +26,6 @@
  *      bytes
  */
 
-/*
- * TODOS:
- *  - asset types
- *  - scene based asset tree
- */
-
 #define MAKE_VERSION(major, minor, patch)                                      \
 	(((major) << 16) | ((minor) << 8) | (patch))
 
@@ -219,5 +213,11 @@ int main(const int argc, const char* argv[]) {
 	}
 
 	AssetPack asset_pack = asset_pack_opt.value();
-	return write_data(asset_pack, asset_pack_path);
+	int result = write_data(asset_pack, asset_pack_path);
+
+	if (result == 0) {
+		std::cout << "Assets bundeled successufully!\n";
+	}
+
+	return result;
 }
