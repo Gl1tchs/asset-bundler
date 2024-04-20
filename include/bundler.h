@@ -56,9 +56,9 @@ struct AssetIndex {
 	// 16 bytes per index
 };
 
-uint32_t get_bundler_version();
+extern uint32_t get_bundler_version();
 
-std::optional<AssetPack> read_asset_pack(const fs::path& path);
+extern std::optional<AssetPack> read_asset_pack(const fs::path& path);
 
 /*
  *  head:
@@ -71,7 +71,7 @@ std::optional<AssetPack> read_asset_pack(const fs::path& path);
  *      size: 4 bytes,
  *  data tree
  */
-int write_data(const AssetPack& pack, fs::path pack_path);
+extern int write_data(const AssetPack& pack, fs::path pack_path);
 
 } //namespace bundler
 
@@ -88,14 +88,14 @@ int write_data(const AssetPack& pack, fs::path pack_path);
 
 namespace bundler {
 
-static void print_parsing_error_message(
+inline void print_parsing_error_message(
 		const fs::path& path, const uint32_t line_number) {
 	std::cerr << "Error: parsing file " << path.filename()
 			  << " at line: " << line_number << " resulted with an error \n";
 }
 
 #ifdef _WIN32
-static bool get_file_size(const std::string& file_path, uint32_t& file_size) {
+inline bool get_file_size(const std::string& file_path, uint32_t& file_size) {
 	WIN32_FILE_ATTRIBUTE_DATA file_attrs;
 	if (!GetFileAttributesExA(
 				file_path.c_str(), GetFileExInfoStandard, &file_attrs)) {
@@ -105,7 +105,7 @@ static bool get_file_size(const std::string& file_path, uint32_t& file_size) {
 	return true;
 }
 #else
-static bool get_file_size(const std::string& file_path, uint32_t& file_size) {
+inline bool get_file_size(const std::string& file_path, uint32_t& file_size) {
 	struct stat st {};
 	if (stat(file_path.c_str(), &st) != 0) {
 		return false;
@@ -115,9 +115,9 @@ static bool get_file_size(const std::string& file_path, uint32_t& file_size) {
 }
 #endif
 
-uint32_t get_bundler_version() { return MAKE_VERSION(0, 1, 0); }
+extern uint32_t get_bundler_version() { return MAKE_VERSION(0, 1, 0); }
 
-std::optional<AssetPack> read_asset_pack(const fs::path& path) {
+extern std::optional<AssetPack> read_asset_pack(const fs::path& path) {
 	std::ifstream file(path);
 
 	if (!file.is_open()) {
@@ -166,7 +166,7 @@ std::optional<AssetPack> read_asset_pack(const fs::path& path) {
 	return pack;
 }
 
-int write_data(const AssetPack& pack, fs::path pack_path) {
+extern int write_data(const AssetPack& pack, fs::path pack_path) {
 	const fs::path pack_dir = pack_path.parent_path();
 
 	std::ofstream out(pack_path.replace_extension(".apkg.bin"),
