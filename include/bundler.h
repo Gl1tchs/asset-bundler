@@ -1,35 +1,44 @@
+// MIT License
+//
+// Copyright (c) 2024 Berke Umut Biricik
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
+// You first need to add this before including the bundler in order it
+// to work. This should only be defined if you are using the functions
+// if you need definitions you don't need to define it.
+//
+// #define ASSET_BUNDLER_IMPLEMENTATION
+//
+
+#pragma once
+
 #include <cstdint>
-#include <cstring>
 #include <filesystem>
-#include <fstream>
-#include <iostream>
 #include <optional>
-#include <string>
 #include <vector>
-
-#ifdef _WIN32
-#include <windows.h>
-#else
-#include <sys/stat.h>
-#endif
-
-/*
- *  head:
- *      file version, 4 bytes
- *      asset index count, 4 bytes
- *      data start position, 4 bytes
- *  asset index tree:
- *      id, 8 bytes
- *      start, 4 bytes
- *      size, 4 bytes
- *  data tree:
- *      bytes
- */
 
 #define MAKE_VERSION(major, minor, patch)                                      \
 	(((major) << 16) | ((minor) << 8) | (patch))
 
 namespace fs = std::filesystem;
+
+namespace bundler {
 
 typedef uint64_t UID;
 
@@ -47,17 +56,66 @@ struct AssetIndex {
 	// 16 bytes per index
 };
 
-void print_help_message() {
-	std::cout << "asset-bundler\n"
-				 "usage:\n"
-				 "    ./asset-bundler asset-pack.apkg\n";
-}
+uint32_t get_bundler_version();
 
-void print_parsing_error_message(
+std::optional<AssetPack> read_asset_pack(const fs::path& path);
+
+/*
+ *  head:
+ *      file version: 4 bytes,
+ *      asset index count: 4 bytes,
+ *      data start position: 4 bytes,
+ *  asset index tree:
+ *      id: 8 bytes,
+ *      start: 4 bytes,
+ *      size: 4 bytes,
+ *  data tree
+ */
+int write_data(const AssetPack& pack, fs::path pack_path);
+
+} //namespace bundler
+
+#ifdef ASSET_BUNDLER_IMPLEMENTATION
+
+#include <fstream>
+#include <iostream>
+
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <sys/stat.h>
+#endif
+
+namespace bundler {
+
+static void print_parsing_error_message(
 		const fs::path& path, const uint32_t line_number) {
 	std::cerr << "Error: parsing file " << path.filename()
 			  << " at line: " << line_number << " resulted with an error \n";
 }
+
+#ifdef _WIN32
+static bool get_file_size(const std::string& file_path, uint32_t& file_size) {
+	WIN32_FILE_ATTRIBUTE_DATA file_attrs;
+	if (!GetFileAttributesExA(
+				file_path.c_str(), GetFileExInfoStandard, &file_attrs)) {
+		return false;
+	}
+	file_size = static_cast<uint32_t>(file_attrs.nFileSizeLow);
+	return true;
+}
+#else
+static bool get_file_size(const std::string& file_path, uint32_t& file_size) {
+	struct stat st {};
+	if (stat(file_path.c_str(), &st) != 0) {
+		return false;
+	}
+	file_size = static_cast<uint32_t>(st.st_size);
+	return true;
+}
+#endif
+
+uint32_t get_bundler_version() { return MAKE_VERSION(0, 1, 0); }
 
 std::optional<AssetPack> read_asset_pack(const fs::path& path) {
 	std::ifstream file(path);
@@ -108,29 +166,6 @@ std::optional<AssetPack> read_asset_pack(const fs::path& path) {
 	return pack;
 }
 
-uint32_t get_version() { return MAKE_VERSION(0, 1, 0); }
-
-#ifdef _WIN32
-static bool get_file_size(const std::string& file_path, uint32_t& file_size) {
-	WIN32_FILE_ATTRIBUTE_DATA file_attrs;
-	if (!GetFileAttributesExA(
-				file_path.c_str(), GetFileExInfoStandard, &file_attrs)) {
-		return false;
-	}
-	file_size = static_cast<uint32_t>(file_attrs.nFileSizeLow);
-	return true;
-}
-#else
-static bool get_file_size(const std::string& file_path, uint32_t& file_size) {
-	struct stat st {};
-	if (stat(file_path.c_str(), &st) != 0) {
-		return false;
-	}
-	file_size = static_cast<uint32_t>(st.st_size);
-	return true;
-}
-#endif
-
 int write_data(const AssetPack& pack, fs::path pack_path) {
 	const fs::path pack_dir = pack_path.parent_path();
 
@@ -138,7 +173,7 @@ int write_data(const AssetPack& pack, fs::path pack_path) {
 			std::ios::binary | std::ios::out);
 
 	// write version
-	const uint32_t version = get_version();
+	const uint32_t version = get_bundler_version();
 	out.write(reinterpret_cast<const char*>(&version), 4);
 
 	// write asset indices size
@@ -190,34 +225,6 @@ int write_data(const AssetPack& pack, fs::path pack_path) {
 	return 0;
 }
 
-int main(const int argc, const char* argv[]) {
-	if (argc != 2) {
-		print_help_message();
-		return 0;
-	}
+} //namespace bundler
 
-	if (!strcmp(argv[1], "--help") || !strcmp(argv[1], "-h")) {
-		print_help_message();
-		return 0;
-	}
-
-	const fs::path asset_pack_path = argv[1];
-	if (!fs::exists(asset_pack_path)) {
-		std::cerr << "Asset pack file does not exists.\n";
-		return 1;
-	}
-
-	const auto asset_pack_opt = read_asset_pack(asset_pack_path);
-	if (!asset_pack_opt.has_value()) {
-		return 1;
-	}
-
-	AssetPack asset_pack = asset_pack_opt.value();
-	int result = write_data(asset_pack, asset_pack_path);
-
-	if (result == 0) {
-		std::cout << "Assets bundled successufully!\n";
-	}
-
-	return result;
-}
+#endif

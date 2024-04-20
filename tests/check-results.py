@@ -1,11 +1,29 @@
 #!/usr/bin/env python3
 
+import sys
 import struct
 from tabulate import tabulate
 
+ARGV = sys.argv[1:]
+
+
+def print_help_message() -> None:
+    print("Usage:\n"
+          " ./check-results.py data/example.apkg.bin")
+
 
 def main() -> None:
-    with open("example.apkg.bin", "rb") as f:
+    if (len(ARGV) < 1):
+        print_help_message()
+        return
+
+    if ("--help" in ARGV or "-h" in ARGV):
+        print_help_message()
+        return
+
+    file_path = ARGV[0]
+
+    with open(file_path, "rb") as f:
         file_version = int.from_bytes(f.read(4), byteorder='little')
         asset_index_count = int.from_bytes(f.read(4), byteorder='little')
         data_start_pos = int.from_bytes(f.read(4), byteorder='little')
