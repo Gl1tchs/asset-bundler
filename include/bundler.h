@@ -91,7 +91,7 @@ namespace bundler {
 inline void print_parsing_error_message(
 		const fs::path& path, const uint32_t line_number) {
 	std::cerr << "Error: parsing file " << path.filename()
-			  << " at line: " << line_number << " resulted with an error \n";
+			  << " at line: " << line_number << ", resulted with an error.\n";
 }
 
 #ifdef _WIN32
@@ -189,13 +189,15 @@ extern int write_data(const AssetPack& pack, fs::path pack_path) {
 
 	// write index tree
 	uint32_t end_pos = 0;
+    uint32_t line_number = 1;
+
 	for (const auto& asset : pack) {
 		AssetIndex index;
 		index.uid = asset.uid;
 		index.start = end_pos;
 		if (!get_file_size(pack_dir / asset.rel_path, index.size)) {
 			std::cerr << "Error: unable to get file size from file: "
-					  << pack_dir / asset.rel_path << "\n";
+					  << pack_dir / asset.rel_path << ", at line: " << line_number << "\n";
 			return 1;
 		}
 
@@ -204,6 +206,8 @@ extern int write_data(const AssetPack& pack, fs::path pack_path) {
 
 		// increase end position
 		end_pos += index.size;
+
+        line_number++;
 	}
 
 	// write data
