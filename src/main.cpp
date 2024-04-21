@@ -11,7 +11,7 @@ static void print_help_message() {
 }
 
 int main(const int argc, const char* argv[]) {
-	if (argc != 2) {
+	if (argc < 2) {
 		print_help_message();
 		return 0;
 	}
@@ -32,8 +32,18 @@ int main(const int argc, const char* argv[]) {
 		return 1;
 	}
 
+	fs::path output_path = [=]() {
+		if (argc == 3) {
+			return fs::path(argv[2]);
+		} else {
+			auto temp_path = asset_pack_path;
+			temp_path.replace_extension("apkg.bin");
+			return temp_path;
+		}
+	}();
+
 	bundler::AssetPack asset_pack = asset_pack_opt.value();
-	int result = bundler::write_data(asset_pack, asset_pack_path);
+	int result = bundler::write_data(asset_pack, asset_pack_path, output_path);
 
 	if (result == 0) {
 		std::cout << "Assets bundled successufully!\n";

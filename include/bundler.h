@@ -166,11 +166,11 @@ extern std::optional<AssetPack> read_asset_pack(const fs::path& path) {
 	return pack;
 }
 
-extern int write_data(const AssetPack& pack, fs::path pack_path) {
+extern int write_data(
+		const AssetPack& pack, fs::path pack_path, fs::path output_path) {
 	const fs::path pack_dir = pack_path.parent_path();
 
-	std::ofstream out(pack_path.replace_extension(".apkg.bin"),
-			std::ios::binary | std::ios::out);
+	std::ofstream out(output_path, std::ios::binary | std::ios::out);
 
 	// write version
 	const uint32_t version = get_bundler_version();
@@ -189,7 +189,7 @@ extern int write_data(const AssetPack& pack, fs::path pack_path) {
 
 	// write index tree
 	uint32_t end_pos = 0;
-    uint32_t line_number = 1;
+	uint32_t line_number = 1;
 
 	for (const auto& asset : pack) {
 		AssetIndex index;
@@ -197,7 +197,8 @@ extern int write_data(const AssetPack& pack, fs::path pack_path) {
 		index.start = end_pos;
 		if (!get_file_size(pack_dir / asset.rel_path, index.size)) {
 			std::cerr << "Error: unable to get file size from file: "
-					  << pack_dir / asset.rel_path << ", at line: " << line_number << "\n";
+					  << pack_dir / asset.rel_path
+					  << ", at line: " << line_number << "\n";
 			return 1;
 		}
 
@@ -207,7 +208,7 @@ extern int write_data(const AssetPack& pack, fs::path pack_path) {
 		// increase end position
 		end_pos += index.size;
 
-        line_number++;
+		line_number++;
 	}
 
 	// write data
